@@ -14,7 +14,7 @@ module SpreadsheetExporter
 
       # Create the csv, ensuring to place each row's attributes under the appropriate header (since rows may not have all the same attributes)
       [].tap do |spreadsheet|
-        spreadsheet << headers
+        spreadsheet << (options[:humanize_headers_class] ? han(options[:humanize_headers_class], headers) : headers)
         rows.each do |row|
           sorted_row = []
           row.each do |header, value|

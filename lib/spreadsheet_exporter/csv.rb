@@ -10,8 +10,8 @@ module SpreadsheetExporter
       from_spreadsheet(spreadsheet)
     end
 
-    def self.from_spreadsheet(spreadsheet, temp_file_path = 'tmp/items.xlsx')
-      output = ::CSV.generate(:encoding => 'UTF-8', :col_sep => "\t") do |csv|
+    def self.from_spreadsheet(spreadsheet, options = {})
+      output = ::CSV.generate(options.reverse_merge :encoding => 'UTF-8', :col_sep => "\t") do |csv|
         spreadsheet.each do |row|
           csv << row
         end

@@ -6,7 +6,7 @@ module SpreadsheetExporter
     BOM = "\377\376".force_encoding("utf-16le") # Byte Order Mark so Excel displays characters correctly
 
     def self.from_objects(objects, options = {})
-      spreadsheet = Spreadsheet.from_objects(objects, options)
+      spreadsheet = Spreadsheet.from_objects(objects, options).compact
       from_spreadsheet(spreadsheet)
     end
 

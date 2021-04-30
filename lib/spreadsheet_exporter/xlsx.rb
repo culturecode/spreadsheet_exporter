@@ -4,7 +4,7 @@ require_relative 'spreadsheet'
 module SpreadsheetExporter
   module XLSX
     def self.from_objects(objects, options = {})
-      spreadsheet = Spreadsheet.from_objects(objects, options)
+      spreadsheet = Spreadsheet.from_objects(objects, options).compact
       from_spreadsheet(spreadsheet)
     end
 

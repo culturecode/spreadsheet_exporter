@@ -7,7 +7,7 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    rubyzip (1.1.7)
+    rubyzip (2.3.0)
     write_xlsx (0.83.0)
       rubyzip (>= 1.0.0)
       zip-zip

@@ -8,9 +8,10 @@ module SpreadsheetExporter
       from_spreadsheet(spreadsheet)
     end
 
-    def self.from_spreadsheet(spreadsheet, temp_file_path = 'tmp/items.xlsx')
+    def self.from_spreadsheet(spreadsheet)
+      io = StringIO.new
       # Create a new Excel workbook
-      workbook = WriteXLSX.new(temp_file_path)
+      workbook = WriteXLSX.new(io)
 
       # Add a worksheet
       worksheet = workbook.add_worksheet
@@ -30,14 +31,9 @@ module SpreadsheetExporter
         end
       end
 
-      # Output the file contents and delete it
       workbook.close
-      file = File.open(temp_file_path)
-      output = file.read
-      file.close
-      File.delete(temp_file_path)
+      io.string
 
-      return output
     end
   end
 end

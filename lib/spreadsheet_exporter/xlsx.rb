@@ -6,7 +6,7 @@ module SpreadsheetExporter
     extend Writexlsx::Utility # gets us `xl_rowcol_to_cell`
 
     ROW_MAX = 65_536 - 1
-    USE_INLINE_LISTS = true # debug toggle, not for production
+    USE_INLINE_LISTS = false # debug toggle, not for production
     MAX_INLINE_LIST_CHARS = 255
 
     VALIDATION_ERROR_TYPES = %w[stop warning information].freeze
@@ -14,7 +14,7 @@ module SpreadsheetExporter
 
     def self.from_objects(objects, options = {})
       spreadsheet = Spreadsheet.from_objects(objects, options).compact
-      from_spreadsheet(spreadsheet, options)
+      from_spreadsheet(spreadsheet, options.deep_stringify_keys)
     end
 
     def self.from_spreadsheet(spreadsheet, options = {})
@@ -48,9 +48,23 @@ module SpreadsheetExporter
       io.string
     end
 
+    # TODO: we should DRY this up with the Spreadsheet.from_objects logic
+    def self.rewrite_validation_column_names(column_validations, options)
+      return column_validations unless options["humanize_headers_class"]
+      klass = options["humanize_headers_class"]
+
+      column_validations.each_with_object({}) do |(attribute, v), obj|
+        rewritten = klass.human_attribute_name(attribute)
+        rewritten.downcase! if options[:downcase]
+        obj[rewritten] = v
+      end
+    end
+
     def self.add_worksheet_validation(workbook, worksheet, column_indexes, header_format, options = {})
-      column_validations = options.fetch("validations", {})
+      column_validations = options.fetch("validations", {}) || {}
       return if column_validations.empty?
+
+      column_validations = rewrite_validation_column_names(column_validations, options)
 
       column_validations.each do |column_name, column_validation|
         column_index = column_indexes[column_name]
@@ -70,7 +84,7 @@ module SpreadsheetExporter
     end
 
     def self.add_column_validation(workbook, column_name, column_index, column_validation, header_format)
-      list_values = column_validation.fetch("source", [])
+      list_values = Array(column_validation.fetch("source", []))
       if list_values.empty?
         raise ArgumentError, "no values for validation for column '#{column_name}'"
       end
@@ -80,11 +94,15 @@ module SpreadsheetExporter
         raise ArgumentError, "invalid error_type `#{error_type}` for validation for column '#{column_name}'"
       end
 
+      list_values.compact!
       list_length = list_values.join(",").length
 
       source = nil
 
       if USE_INLINE_LISTS && list_length <= MAX_INLINE_LIST_CHARS
+        # commas are not allowed when
+        # TODO: we should warn about losing any commas
+        list_values.map! { |v| v.sub(',', '').strip }
         source = list_values
       else
         data_start = xl_rowcol_to_cell(1, column_index)

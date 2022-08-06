@@ -1,5 +1,5 @@
-require 'spreadsheet_exporter/csv'
-require 'spreadsheet_exporter/xlsx'
+require_relative './spreadsheet_exporter/csv'
+require_relative './spreadsheet_exporter/xlsx'
 module SpreadsheetExporter
   begin
     Mime::Type.register "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", :xlsx

@@ -117,9 +117,9 @@ module SpreadsheetExporter
           data_sheet = workbook.add_worksheet(DATA_WORKSHEET_NAME)
         end
 
-        data_start = xl_rowcol_to_cell(1, column_index)
-        data_end = xl_rowcol_to_cell(ROW_MAX, column_index)
-        source = "=data!$#{data_start}:#{data_end}"
+        data_start = xl_rowcol_to_cell(1, column_index, true, true)
+        data_end = xl_rowcol_to_cell(list_values.length, column_index, true, true)
+        source = "=data!#{data_start}:#{data_end}"
 
         data_sheet.write(0, column_index, column_name, header_format)
         data_sheet.write_col(1, column_index, list_values)

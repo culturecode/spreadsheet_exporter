@@ -1,5 +1,7 @@
 require 'write_xlsx'
 require_relative 'spreadsheet'
+require "active_support"
+require "active_support/core_ext/hash/keys"
 
 module SpreadsheetExporter
   module XLSX

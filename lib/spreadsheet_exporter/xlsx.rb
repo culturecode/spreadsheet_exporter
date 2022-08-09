@@ -111,16 +111,13 @@ module SpreadsheetExporter
         list_values.map! { |v| v.sub(',', '').strip }
         source = list_values
       else
-        data_start = xl_rowcol_to_cell(1, column_index)
-        data_end = xl_rowcol_to_cell(ROW_MAX, column_index)
-
-        source = "=data!$#{data_start}:#{data_end}"
-        warn "list values for column #{column_name} too long to be inlined, " \
-          "len #{list_length} > #{MAX_INLINE_LIST_CHARS}, moving source to #{source}"
-
         unless (data_sheet = workbook.worksheet_by_name(DATA_WORKSHEET_NAME))
           data_sheet = workbook.add_worksheet(DATA_WORKSHEET_NAME)
         end
+
+        data_start = xl_rowcol_to_cell(1, column_index)
+        data_end = xl_rowcol_to_cell(ROW_MAX, column_index)
+        source = "=data!$#{data_start}:#{data_end}"
 
         data_sheet.write(0, column_index, column_name, header_format)
         data_sheet.write_col(1, column_index, list_values)

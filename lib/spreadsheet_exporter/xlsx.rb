@@ -6,6 +6,12 @@ module SpreadsheetExporter
     extend Writexlsx::Utility # gets us `xl_rowcol_to_cell`
 
     ROW_MAX = 65_536 - 1
+
+    # Excel allows defining validation `sources` in two different ways, an inline
+    # list or a reference to cells elsewhere in the workbook.
+    #
+    # The inline list is defined as a comma-separated string with a max length of
+    # 255 characters.
     USE_INLINE_LISTS = false # debug toggle, not for production
     MAX_INLINE_LIST_CHARS = 255
 

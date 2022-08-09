@@ -10,10 +10,10 @@ require "debug"
 # no data in it yet
 
 data = [
-  {"name" => "Jim", "role" => "admin", "city" => "Vancouver"},
+  {"name" => "Jim", "role" => "admin", "city" => CITIES.sample},
   {"name" => "Sally", "role" => "user"},
   {"name" => "Horatio", "role" => "user", "meal" => "Paleo"},
-  {"name" => "Jan", "role" => "user", "site_type" => SITE_TYPES.sample}
+  {"name" => "Jan", "role" => "user"}
 ]
 
 options = {
@@ -25,19 +25,14 @@ options = {
     "city" => {
       "ignore_blank" => true,
       "error_type" => "information",
-      "source" => %w[Victoria Vancouver Courtenay]
+      "source" => CITIES
     },
     "meal" => {
       "ignore_blank" => true,
       "error_type" => "warning",
       "source" => %w[Omnivore Veg Vegan]
-    },
-    "site_type" => {
-      "source" => SITE_TYPES
     }
   }
 }
 
-File.open("output.xlsx", "wb") do |f|
-  f.write SpreadsheetExporter::XLSX.from_objects(data, options)
-end
+File.binwrite("output.xlsx", SpreadsheetExporter::XLSX.from_objects(data, options))

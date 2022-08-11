@@ -20,12 +20,12 @@ module SpreadsheetExporter
       headerFormat.set_bold
 
       # Write header row
-      spreadsheet.first.each_with_index do |column_name, col|
+      Array(spreadsheet.first).each_with_index do |column_name, col|
         worksheet.write(0, col, column_name, headerFormat)
       end
 
-      spreadsheet[1..-1].each_with_index do |values, row|
-        values.each_with_index do |value, col|
+      Array(spreadsheet[1..-1]).each_with_index do |values, row|
+        Array(values).each_with_index do |value, col|
           worksheet.write(row + 1, col, value)
         end
       end

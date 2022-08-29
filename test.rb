@@ -10,28 +10,51 @@ require "debug"
 # no data in it yet
 
 data = [
-  {"name" => "Jim", "role" => "admin", "city" => CITIES.sample},
-  {"name" => "Sally", "role" => "user"},
-  {"name" => "Horatio", "role" => "user", "meal" => "Paleo"},
+  {"name" => "Jim", "role" => "admin"}.merge(country_and_city),
+  {"name" => "Sally", "role" => "user", "favourite_meal" => MEALS.sample, "most_recent_meal" => MEALS.sample}.merge(country_and_city),
+  {"name" => "Horatio", "role" => "user", "favourite_meal" => MEALS.sample, "most_recent_meal" => MEALS.sample},
   {"name" => "Jan", "role" => "user"}
 ]
 
 options = {
+  "data_sources" => {
+    "all_meals" => MEALS,
+    "roles" => %w[admin user spammer boss],
+    "countries" => CONDITIONAL_CITIES.keys
+  },
+
   "validations" => {
-    "role" => {
-      "ignore_blank" => false,
-      "source" => %w[admin user spammer boss]
-    },
-    "city" => {
-      "ignore_blank" => true,
-      "error_type" => "information",
-      "source" => CITIES
-    },
-    "meal" => {
-      "ignore_blank" => true,
-      "error_type" => "warning",
-      "source" => %w[Omnivore Veg Vegan]
-    }
+    "role" => SpreadsheetExporter::ColumnValidation.new(
+      attribute_name: "role",
+      ignore_blank: false,
+      data_source: "roles"
+    ),
+
+    "country" => SpreadsheetExporter::ColumnValidation.new(
+      attribute_name: "country",
+      ignore_blank: true,
+      error_type: "information",
+      data_source: "countries"
+    ),
+    # "city" => SpreadsheetExporter::ColumnValidation.new(
+    #   :attribute_name => "city",
+    #   :ignore_blank => true,
+    #   :error_type => "information",
+    #   :indirect_built_from => "country",
+    #   :data_source => CONDITIONAL_CITIES
+    # ),
+    "favourite_meal" => SpreadsheetExporter::ColumnValidation.new(
+      attribute_name: "favourite_meal",
+      ignore_blank: true,
+      error_type: "warning",
+      data_source: "all_meals"
+    ),
+    "most_recent_meal" => SpreadsheetExporter::ColumnValidation.new(
+      attribute_name: "most_recent_meal",
+      ignore_blank: true,
+      error_type: "warning",
+      data_source: "all_meals"
+    )
   }
 }
 

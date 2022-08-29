@@ -8,16 +8,6 @@ module SpreadsheetExporter
     extend Writexlsx::Utility # gets us `xl_rowcol_to_cell`
 
     ROW_MAX = 65_536 - 1
-
-    # Excel allows defining validation `sources` in two different ways, an inline
-    # list or a reference to cells elsewhere in the workbook.
-    #
-    # The inline list is defined as a comma-separated string with a max length of
-    # 255 characters.
-    USE_INLINE_LISTS = false # debug toggle, not for production
-    MAX_INLINE_LIST_CHARS = 255
-
-    VALIDATION_ERROR_TYPES = %w[stop warning information].freeze
     DATA_WORKSHEET_NAME = "data".freeze
 
     def self.from_objects(objects, options = {})
@@ -46,7 +36,8 @@ module SpreadsheetExporter
         worksheet.write_row(row + 1, 0, Array(values))
       end
 
-      add_worksheet_validation(workbook, worksheet, column_indexes, header_format, options)
+      data_sources = add_data_sources(workbook, header_format, options)
+      add_worksheet_validation(workbook, worksheet, column_indexes, data_sources, header_format, options)
 
       workbook.worksheets.each do |ws|
         ws.freeze_panes(1, 0)
@@ -54,6 +45,41 @@ module SpreadsheetExporter
 
       workbook.close
       io.string
+    end
+
+    def self.add_data_sources(workbook, header_format, options = {})
+      data_sources = options.fetch("data_sources", {}) || {}
+      return {} if data_sources.empty?
+
+      unless (data_sheet = workbook.worksheet_by_name(DATA_WORKSHEET_NAME))
+        data_sheet = workbook.add_worksheet(DATA_WORKSHEET_NAME)
+      end
+
+      data_source_refs = {}
+
+      data_sources.each_with_index do |(data_key, data_values), column_index|
+        data_source_refs[data_key] = add_data_source(workbook, data_sheet, data_key, data_values, column_index, header_format)
+      end
+
+      data_source_refs
+    end
+
+    # Write a data column to the `data` worksheet and define it as a named range
+    #
+    # Returnd the named range's name
+    def self.add_data_source(workbook, data_sheet, data_key, data_values, column_index, header_format)
+      raise ArgumentError unless data_values.is_a?(Array)
+
+      data_start = xl_rowcol_to_cell(1, column_index, true, true)
+      data_end = xl_rowcol_to_cell(data_values.length, column_index, true, true)
+
+      defined_name_source = "=#{DATA_WORKSHEET_NAME}!#{data_start}:#{data_end}"
+
+      data_sheet.write(0, column_index, data_key, header_format)
+      data_sheet.write_col(1, column_index, data_values)
+      defined_name = data_key
+      workbook.define_name(defined_name, defined_name_source)
+      defined_name
     end
 
     # TODO: we should DRY this up with the Spreadsheet.from_objects logic
@@ -68,7 +94,7 @@ module SpreadsheetExporter
       end
     end
 
-    def self.add_worksheet_validation(workbook, worksheet, column_indexes, header_format, options = {})
+    def self.add_worksheet_validation(workbook, worksheet, column_indexes, data_sources, header_format, options = {})
       column_validations = options.fetch("validations", {}) || {}
       return if column_validations.empty?
 
@@ -83,7 +109,10 @@ module SpreadsheetExporter
           next
         end
 
-        validation_options = add_column_validation(workbook, column_name, column_index, column_validation, header_format)
+        defined_name = data_sources[column_validation.data_source]
+        raise ArgumentError, "missing data for data_source=#{column_validation.data_source}" unless defined_name
+
+        validation_options = add_column_validation(column_validation, defined_name)
 
         pp validation_options
 
@@ -91,47 +120,13 @@ module SpreadsheetExporter
       end
     end
 
-    def self.add_column_validation(workbook, column_name, column_index, column_validation, header_format)
-      list_values = Array(column_validation.fetch("source", []))
-      if list_values.empty?
-        raise ArgumentError, "no values for validation for column '#{column_name}'"
-      end
-
-      error_type = column_validation.fetch("error_type", VALIDATION_ERROR_TYPES[0])
-      unless VALIDATION_ERROR_TYPES.include?(error_type)
-        raise ArgumentError, "invalid error_type `#{error_type}` for validation for column '#{column_name}'"
-      end
-
-      list_values.compact!
-      list_length = list_values.join(",").length
-
-      source = nil
-
-      if USE_INLINE_LISTS && list_length <= MAX_INLINE_LIST_CHARS
-        # commas are not allowed when
-        # TODO: we should warn about losing any commas
-        list_values.map! { |v| v.sub(',', '').strip }
-        source = list_values
-      else
-        unless (data_sheet = workbook.worksheet_by_name(DATA_WORKSHEET_NAME))
-          data_sheet = workbook.add_worksheet(DATA_WORKSHEET_NAME)
-        end
-
-        data_start = xl_rowcol_to_cell(1, column_index, true, true)
-        data_end = xl_rowcol_to_cell(list_values.length, column_index, true, true)
-        source = "=data!#{data_start}:#{data_end}"
-
-        data_sheet.write(0, column_index, column_name, header_format)
-        data_sheet.write_col(1, column_index, list_values)
-      end
-
+    def self.add_column_validation(column_validation, defined_name)
       {
         "validate" => "list",
         "input_title" => "Select a value",
-        "source" => source,
-        "error_message" => column_validation.fetch("error_message", "Please select a valid option"),
-        "error_type" => error_type,
-        "ignore_blank" => column_validation.fetch("ignore_blank", true),
+        "source" => "=#{defined_name}",
+        "error_type" => column_validation.error_type,
+        "ignore_blank" => column_validation.ignore_blank,
         "dropdown" => true
       }
     end

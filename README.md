@@ -28,3 +28,24 @@ that is actually comma-delimited, pass ```:col_sep => ','``` as an option when e
 ```ruby
   SpreadsheetExporter::CSV.from_spreadsheet([["First Name", "Last Name"], ["Bob", "Hoskins"], ["Roger", "Rabbit"]])
 ```
+
+### XLSX with Pick Lists
+
+```ruby
+options = {
+  # data sources are written to a `data` worksheet and may be referenced by
+  # multiple rows
+  "data_sources" => {
+    "food_types" => %w[Polenta Paella Papaya],
+  },
+  "validations" => {
+    "favourite_food" => SpreadsheetExporter::ColumnValidation.new(
+      attribute_name: "favourite_food",
+      data_source: "food_types"
+    ),
+    "yuckiest_food" => SpreadsheetExporter::ColumnValidation.new(
+      attribute_name: "yuckiest_food",
+      data_source: "food_types"
+    )
+  }
+```

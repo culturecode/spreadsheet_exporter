@@ -114,9 +114,9 @@ module SpreadsheetExporter
 
       data_sheet.write(0, column_index, data_key, header_format)
       data_sheet.write_col(1, column_index, data_values.map(&:strip))
-      defined_name = data_key
-      workbook.define_name(defined_name, defined_name_source)
-      defined_name
+      workbook.define_name(data_key, defined_name_source)
+
+      data_key
     end
 
     def self.add_worksheet_validation(workbook, worksheet, column_indexes, data_sources, header_format, options = {})
@@ -131,24 +131,18 @@ module SpreadsheetExporter
           next
         end
 
-        defined_name = nil
-
-        if column_validation.dependent_on
-          # parent_col is the column we listen to for changes and then update the dependent columns
-          # valid options
-          parent_col_index = column_indexes[column_validation.dependent_on]
-          parent_col = xl_col_to_name(parent_col_index, true)
-
-          defined_name = dependent_named_range(column_validation.data_source, parent_col)
-        else
-          defined_name = data_sources[column_validation.data_source]
-        end
+        defined_name = if column_validation.dependent_on
+                         parent_col_index = column_indexes[column_validation.dependent_on]
+                         parent_col = xl_col_to_name(parent_col_index, true)
+                         dependent_named_range(column_validation.data_source, parent_col)
+                       else
+                         data_sources[column_validation.data_source]
+                       end
 
         unless defined_name
           raise ArgumentError, "missing data for data_source=#{column_validation.data_source}, " \
                                "tried defined_name #{defined_name}"
         end
-
 
         validation_options = generate_validation(column_validation, defined_name)
         pp validation_options
@@ -162,10 +156,11 @@ module SpreadsheetExporter
     # to dynamically build the name.  The resulting formula becomes the validation drop down's
     # source. It resolves thusly...
     #
-    # INDIRECT("sub_data_source" & "_" & SUBSTITUTE(INDIRECT("$AA" & ROW()), " ", "_"))
-    # INDIRECT("sub_data_source" & "_" & SUBSTITUTE("Parent Value, " ", "_"))
-    # INDIRECT("sub_data_source" & "_" & "Parent_Value")
-    # INDIRECT("sub_data_source_Parent_Value")
+    # =INDIRECT("sub_data_source" & "_" & SUBSTITUTE(INDIRECT("$AA" & ROW()), " ", "_"))
+    # =INDIRECT("sub_data_source" & "_" & SUBSTITUTE("Parent Value, " ", "_"))
+    # =INDIRECT("sub_data_source" & "_" & "Parent_Value")
+    # =INDIRECT("sub_data_source_Parent_Value")
+    # =sub_data_source_Parent_Value
     def self.dependent_named_range(data_source, parent_col)
       "INDIRECT(\"#{data_source}\" & \"_\" & "\
       "SUBSTITUTE(INDIRECT(\"#{parent_col}\" & ROW()), \" \", \"_\"))"

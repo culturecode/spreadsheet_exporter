@@ -36,7 +36,7 @@ module SpreadsheetExporter
         worksheet.write_row(row + 1, 0, Array(values))
       end
 
-      data_sources = add_data_sources(workbook, header_format, options)
+      data_sources = add_data_sources(workbook, header_format, options.fetch("data_sources", {}) || {})
       pp data_sources
       add_worksheet_validation(workbook, worksheet, column_indexes, data_sources, header_format, options)
 
@@ -52,8 +52,20 @@ module SpreadsheetExporter
       raw.gsub(/[^A-Za-z0-9_]/, "_")
     end
 
-    def self.add_data_sources(workbook, header_format, options = {})
-      data_sources = options.fetch("data_sources", {}) || {}
+    # Write each data_source to the `data` worksheet and reference it with a named range
+    #
+    # `data_sources` is a hash in the format
+    #
+    #     { 'data_source_id' => ['data', 'source', 'options'] }
+    #
+    # For data sources dependent on the value in another column, the format is
+    #
+    #     { 'data_source_id' => {
+    #         'other_col_val_1' => ['options', 'when', 'val is 1'],
+    #         'other_col_val_2' => ['options', 'when', 'val is 2']
+    #       }
+    #     }
+    def self.add_data_sources(workbook, header_format, data_sources)
       return {} if data_sources.empty?
 
       unless (data_sheet = workbook.worksheet_by_name(DATA_WORKSHEET_NAME))

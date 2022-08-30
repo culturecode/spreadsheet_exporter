@@ -53,15 +53,16 @@ options = {
     )
   }
 }
-class Yoda
+class Humanizer
   def self.human_attribute_name(att)
-    att.reverse
+    att.upcase
   end
 end
 
 # debugger
-# SpreadsheetExporter::CSV.from_objects(data, :humanize_headers_class => Yoda)
+# SpreadsheetExporter::CSV.from_objects(data, :humanize_headers_class => Humanizer)
 
-options[:humanize_headers_class] = Yoda
+options[:humanize_headers_class] = Humanizer
+options[:freeze_panes] = [1, 4]
 
 File.binwrite("output.xlsx", SpreadsheetExporter::XLSX.from_objects(data, options))

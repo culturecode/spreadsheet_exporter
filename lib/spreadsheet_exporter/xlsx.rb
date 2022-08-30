@@ -40,9 +40,7 @@ module SpreadsheetExporter
       pp data_sources
       add_worksheet_validation(workbook, worksheet, column_indexes, data_sources, header_format, options)
 
-      workbook.worksheets.each do |ws|
-        ws.freeze_panes(1, 0)
-      end
+      freeze_panes(worksheet, options)
 
       workbook.close
       io.string
@@ -50,6 +48,13 @@ module SpreadsheetExporter
 
     def self.sanitize_defined_name(raw)
       raw.gsub(/[^A-Za-z0-9_]/, "_")
+    end
+
+    # freeze_panes => [1, 2] # freeze the top row and left two cols
+    def self.freeze_panes(worksheet, options = {})
+      return unless options["freeze_panes"]
+      rows, cols = options["freeze_panes"]
+      worksheet.freeze_panes(Integer(rows), Integer(cols))
     end
 
     # Write each data_source to the `data` worksheet and reference it with a named range
@@ -70,6 +75,7 @@ module SpreadsheetExporter
 
       unless (data_sheet = workbook.worksheet_by_name(DATA_WORKSHEET_NAME))
         data_sheet = workbook.add_worksheet(DATA_WORKSHEET_NAME)
+        data_sheet.freeze_panes(1, 0)
       end
 
       data_source_refs = {}

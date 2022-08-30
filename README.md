@@ -46,5 +46,6 @@ options = {
     "yuckiest_food" => SpreadsheetExporter::ColumnValidation.new(
       data_source: "food_types"
     )
-  }
+  },
+  "freeze_panes" => [1, 0] # number of rows and columns to freeze (only applies to XLSX)
 ```

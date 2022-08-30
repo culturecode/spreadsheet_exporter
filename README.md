@@ -37,14 +37,13 @@ options = {
   # multiple rows
   "data_sources" => {
     "food_types" => %w[Polenta Paella Papaya],
+    "countries" => {"Canada"=>["Sxwōxwiyám", "Toronto"], "Türkiye"=>["Eskişehir", "İzmir", "İstanbul"]}
   },
   "validations" => {
     "favourite_food" => SpreadsheetExporter::ColumnValidation.new(
-      attribute_name: "favourite_food",
       data_source: "food_types"
     ),
     "yuckiest_food" => SpreadsheetExporter::ColumnValidation.new(
-      attribute_name: "yuckiest_food",
       data_source: "food_types"
     )
   }

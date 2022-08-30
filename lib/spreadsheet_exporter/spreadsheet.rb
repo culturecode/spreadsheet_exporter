@@ -7,8 +7,15 @@ module SpreadsheetExporter
 
       # Get all the data and accumulate headers from each row (since rows may not have all the same attributes)
       Array(objects).each do |object|
-        data = object.respond_to?(:as_csv) ? get_values(object.as_csv(options)) : get_values(object.as_json(options))
-        headers = headers | data.keys
+        data = if object.respond_to?(:as_spreadsheet)
+          get_values(object.as_spreadsheet(options))
+        elsif object.respond_to?(:as_csv)
+          get_values(object.as_csv(options))
+        else
+          get_values(object.as_json(options))
+        end
+
+        headers |= data.keys
         rows << data
       end
 

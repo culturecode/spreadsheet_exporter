@@ -20,37 +20,33 @@ options = {
   "data_sources" => {
     "all_meals" => MEALS,
     "roles" => %w[admin user spammer boss],
-    "countries" => CONDITIONAL_CITIES.keys
+    "countries" => COUNTRIES,
+    "cities" => CONDITIONAL_CITIES
   },
 
   "validations" => {
     "role" => SpreadsheetExporter::ColumnValidation.new(
-      attribute_name: "role",
       ignore_blank: false,
       data_source: "roles"
     ),
 
     "country" => SpreadsheetExporter::ColumnValidation.new(
-      attribute_name: "country",
       ignore_blank: true,
       error_type: "information",
       data_source: "countries"
     ),
-    # "city" => SpreadsheetExporter::ColumnValidation.new(
-    #   :attribute_name => "city",
-    #   :ignore_blank => true,
-    #   :error_type => "information",
-    #   :indirect_built_from => "country",
-    #   :data_source => CONDITIONAL_CITIES
-    # ),
+    "city" => SpreadsheetExporter::ColumnValidation.new(
+      ignore_blank: true,
+      error_type: "information",
+      indirect_built_from: "country",
+      data_source: "cities"
+    ),
     "favourite_meal" => SpreadsheetExporter::ColumnValidation.new(
-      attribute_name: "favourite_meal",
       ignore_blank: true,
       error_type: "warning",
       data_source: "all_meals"
     ),
     "most_recent_meal" => SpreadsheetExporter::ColumnValidation.new(
-      attribute_name: "most_recent_meal",
       ignore_blank: true,
       error_type: "warning",
       data_source: "all_meals"

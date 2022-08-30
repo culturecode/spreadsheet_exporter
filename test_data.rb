@@ -1,27 +1,26 @@
-CITIES = [
-  "Sxwōxwiyám: Sqáyéx/Xwyélés",
-  "Ceuta",
-  "Juanhaven",
-  "佳市",
-  "East Sarah",
-  "山武郡横芝光町",
-  "川崎市宮前区",
-  "Blondel-sur-Pottier",
-  "West Christine",
-  "Lake Amandahaven",
-  "Weekshaven",
-  "Breuerscheid",
-  "Matisscheid",
-  "Groß Naemidorf",
-  "Groß Maxim",
-  "Scharfgrün",
-  "Neu Liahhagen",
-  "Eliasstadt",
-  "Mögenburgscheid",
-  "Edirne",
-  "Eskişehir",
-  "İzmir",
-  "İstanbul",
-  "Van",
-  "Şırnak"
-].map { |s| s.encode("UTF-8") }
+def country_and_city
+  country = sample_country
+  city = CONDITIONAL_CITIES[country].sample
+  {country: country, city: city}
+end
+
+def sample_country
+  CONDITIONAL_CITIES.keys.sample
+end
+
+MEALS = %w[Omnivore Veg Vegan]
+
+# COUNTRIES = %w[Canada Türkiye]
+COUNTRIES = %w[Canada Turkey]
+
+CONDITIONAL_CITIES = {
+  COUNTRIES[0] => [
+    "Sxwōxwiyám",
+    "Toronto"
+  ].map { |s| s.encode("UTF-8") },
+  COUNTRIES[1] => [
+    "Eskişehir",
+    "İzmir",
+    "İstanbul"
+  ].map { |s| s.encode("UTF-8") }
+}

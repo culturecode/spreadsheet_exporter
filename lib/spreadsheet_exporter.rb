@@ -1,3 +1,4 @@
+require_relative './spreadsheet_exporter/generates_spreadsheet'
 require_relative './spreadsheet_exporter/column_validation'
 require_relative './spreadsheet_exporter/csv'
 require_relative './spreadsheet_exporter/xlsx'

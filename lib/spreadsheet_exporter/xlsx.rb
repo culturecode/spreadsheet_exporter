@@ -5,7 +5,7 @@ require "active_support/core_ext/hash/keys"
 
 module SpreadsheetExporter
   module XLSX
-    extend Writexlsx::Utility # gets us `xl_rowcol_to_cell`
+    extend Writexlsx::Utility # gets us `xl_rowcol_to_cell` and `xl_col_to_name`
 
     ROW_MAX = 65_536 - 1
     DATA_WORKSHEET_NAME = "data".freeze
@@ -127,37 +127,48 @@ module SpreadsheetExporter
         column_index = column_indexes[column_name]
 
         if column_index.nil?
-          # TODO: we should output an empty column anyways
           warn "attempted to apply validation to missing column '#{column_name}'"
           next
         end
 
-        # Excel's `INDIRECT` function lets us build up the name of a defined range dynamically
-        if column_validation.indirect_built_from
-          parent_column_index = column_indexes[column_validation.indirect_built_from]
+        defined_name = nil
 
-          # TODO: que pasa
-          (1..20).each do |row_index|
-            indirect_cell = xl_rowcol_to_cell(row_index, parent_column_index, false, false)
-            defined_name = "INDIRECT(\"#{column_validation.data_source}\" & \"_\" & SUBSTITUTE(#{indirect_cell}, \" \", \"\"))"
+        if column_validation.dependent_on
+          # parent_col is the column we listen to for changes and then update the dependent columns
+          # valid options
+          parent_col_index = column_indexes[column_validation.dependent_on]
+          parent_col = xl_col_to_name(parent_col_index, true)
 
-            validation_options = generate_validation(column_validation, defined_name)
-            pp validation_options
-            worksheet.data_validation(row_index, column_index, validation_options)
-          end
+          defined_name = dependent_named_range(column_validation.data_source, parent_col)
         else
           defined_name = data_sources[column_validation.data_source]
-          unless defined_name
-            raise ArgumentError, "missing data for data_source=#{column_validation.data_source}"
-          end
-
-          validation_options = generate_validation(column_validation, defined_name)
-          pp validation_options
-          worksheet.data_validation(1, column_index, ROW_MAX, column_index, validation_options)
         end
+
+        unless defined_name
+          raise ArgumentError, "missing data for data_source=#{column_validation.data_source}, " \
+                               "tried defined_name #{defined_name}"
+        end
+
+
+        validation_options = generate_validation(column_validation, defined_name)
+        pp validation_options
+        worksheet.data_validation(1, column_index, ROW_MAX, column_index, validation_options)
       rescue StandardError => e
         debugger
       end
+    end
+
+    # We build up the reference to the named range by leaning on Excel's INDIRECT function
+    # to dynamically build the name.  The resulting formula becomes the validation drop down's
+    # source. It resolves thusly...
+    #
+    # INDIRECT("sub_data_source" & "_" & SUBSTITUTE(INDIRECT("$AA" & ROW()), " ", "_"))
+    # INDIRECT("sub_data_source" & "_" & SUBSTITUTE("Parent Value, " ", "_"))
+    # INDIRECT("sub_data_source" & "_" & "Parent_Value")
+    # INDIRECT("sub_data_source_Parent_Value")
+    def self.dependent_named_range(data_source, parent_col)
+      "INDIRECT(\"#{data_source}\" & \"_\" & "\
+      "SUBSTITUTE(INDIRECT(\"#{parent_col}\" & ROW()), \" \", \"_\"))"
     end
 
     def self.generate_validation(column_validation, defined_name)

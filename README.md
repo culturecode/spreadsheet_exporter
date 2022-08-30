@@ -37,7 +37,8 @@ options = {
   # multiple rows
   "data_sources" => {
     "food_types" => %w[Polenta Paella Papaya],
-    "countries" => {"Canada"=>["Sxwōxwiyám", "Toronto"], "Türkiye"=>["Eskişehir", "İzmir", "İstanbul"]}
+    "countries" => %w[Canada Türkiye],
+    "cities" => {"Canada"=>["Sxwōxwiyám", "Toronto"], "Türkiye"=>["Eskişehir", "İzmir", "İstanbul"]}
   },
   "validations" => {
     "favourite_food" => SpreadsheetExporter::ColumnValidation.new(
@@ -45,7 +46,14 @@ options = {
     ),
     "yuckiest_food" => SpreadsheetExporter::ColumnValidation.new(
       data_source: "food_types"
-    )
+    ),
+    "country" => SpreadsheetExporter::ColumnValidation.new(
+      data_source: "countries"
+    ),
+    "city" => SpreadsheetExporter::ColumnValidation.new(
+      dependent_on: "country",
+      data_source: "cities"
+    ),
   },
   "freeze_panes" => [1, 0] # number of rows and columns to freeze (only applies to XLSX)
 ```

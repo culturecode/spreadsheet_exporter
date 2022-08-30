@@ -29,7 +29,6 @@ options = {
       ignore_blank: false,
       data_source: "roles"
     ),
-
     "country" => SpreadsheetExporter::ColumnValidation.new(
       ignore_blank: true,
       error_type: "information",
@@ -38,7 +37,7 @@ options = {
     "city" => SpreadsheetExporter::ColumnValidation.new(
       ignore_blank: true,
       error_type: "information",
-      indirect_built_from: "country",
+      dependent_on: "country",
       data_source: "cities"
     ),
     "favourite_meal" => SpreadsheetExporter::ColumnValidation.new(
@@ -63,6 +62,6 @@ end
 # SpreadsheetExporter::CSV.from_objects(data, :humanize_headers_class => Humanizer)
 
 options[:humanize_headers_class] = Humanizer
-options[:freeze_panes] = [1, 4]
+options[:freeze_panes] = [1, 1]
 
 File.binwrite("output.xlsx", SpreadsheetExporter::XLSX.from_objects(data, options))

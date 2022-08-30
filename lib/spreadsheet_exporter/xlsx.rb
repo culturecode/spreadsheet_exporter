@@ -27,9 +27,9 @@ module SpreadsheetExporter
       column_indexes = {}
 
       # Write header row
-      Array(spreadsheet.first).each_with_index do |column_name, col|
-        worksheet.write(0, col, column_name, header_format)
-        column_indexes[column_name] = col
+      Array(spreadsheet.first).each_with_index do |header, col|
+        worksheet.write(0, col, header.to_s, header_format)
+        column_indexes[header.attribute_name] = col
       end
 
       Array(spreadsheet[1..]).each_with_index do |values, row|
@@ -101,24 +101,9 @@ module SpreadsheetExporter
       defined_name
     end
 
-    # TODO: we should DRY this up with the Spreadsheet.from_objects logic
-    def self.rewrite_validation_column_names(column_validations, options)
-      return column_validations unless options["humanize_headers_class"]
-
-      klass = options["humanize_headers_class"]
-
-      column_validations.each_with_object({}) do |(attribute, v), obj|
-        rewritten = klass.human_attribute_name(attribute)
-        rewritten.downcase! if options[:downcase]
-        obj[rewritten] = v
-      end
-    end
-
     def self.add_worksheet_validation(workbook, worksheet, column_indexes, data_sources, header_format, options = {})
       column_validations = options.fetch("validations", {}) || {}
       return if column_validations.empty?
-
-      column_validations = rewrite_validation_column_names(column_validations, options)
 
       column_validations.each do |column_name, column_validation|
         column_index = column_indexes[column_name]
@@ -133,7 +118,8 @@ module SpreadsheetExporter
         if column_validation.indirect_built_from
           parent_column_index = column_indexes[column_validation.indirect_built_from]
 
-          (1..100).each do |row_index|
+          # TODO: que pasa
+          (1..20).each do |row_index|
             indirect_cell = xl_rowcol_to_cell(row_index, parent_column_index, false, false)
             defined_name = "INDIRECT(\"#{column_validation.data_source}\" & \"_\" & SUBSTITUTE(#{indirect_cell}, \" \", \"\"))"
 

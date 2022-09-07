@@ -6,9 +6,8 @@ module SpreadsheetExporter
     end
   end
 
-
   module Spreadsheet
-    def self.from_objects(objects, options = {})
+    def self.from_objects(objects, humanize_headers_class: nil, **options)
       headers = []
       rows = []
 
@@ -28,8 +27,8 @@ module SpreadsheetExporter
 
       # Create the csv, ensuring to place each row's attributes under the appropriate header (since rows may not have all the same attributes)
       [].tap do |spreadsheet|
-        if options[:humanize_headers_class]
-          headers = han(headers, **options)
+        if humanize_headers_class
+          headers = han(headers, humanize_headers_class: humanize_headers_class, **options)
         end
 
         spreadsheet << headers

@@ -17,14 +17,14 @@ data = [
 ]
 
 options = {
-  "data_sources" => {
+  :data_sources => {
     "all_meals" => MEALS,
     "roles" => %w[admin user spammer boss],
     "countries" => COUNTRIES,
     "cities" => CONDITIONAL_CITIES
   },
 
-  "validations" => {
+  :validations => {
     "role" => SpreadsheetExporter::ColumnValidation.new(
       ignore_blank: false,
       data_source: "roles"
@@ -64,4 +64,4 @@ end
 options[:humanize_headers_class] = Humanizer
 options[:freeze_panes] = [1, 1]
 
-File.binwrite("output.xlsx", SpreadsheetExporter::XLSX.from_objects(data, options))
+File.binwrite("output.xlsx", SpreadsheetExporter::XLSX.from_objects(data, **options))

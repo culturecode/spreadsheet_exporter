@@ -10,12 +10,12 @@ module SpreadsheetExporter
     ROW_MAX = 65_536 - 1
     DATA_WORKSHEET_NAME = "data".freeze
 
-    def self.from_objects(objects, options = {})
-      spreadsheet = Spreadsheet.from_objects(objects, options).compact
-      from_spreadsheet(spreadsheet, options.deep_stringify_keys)
+    def self.from_objects(objects, humanize_headers_class: nil, **options)
+      spreadsheet = Spreadsheet.from_objects(objects, humanize_headers_class: humanize_headers_class, **options).compact
+      from_spreadsheet(spreadsheet, **options)
     end
 
-    def self.from_spreadsheet(spreadsheet, options = {})
+    def self.from_spreadsheet(spreadsheet, validations: {}, data_sources: {}, freeze_panes: false, **options)
       io = StringIO.new
       workbook = WriteXLSX.new(io)
 
@@ -36,11 +36,11 @@ module SpreadsheetExporter
         worksheet.write_row(row + 1, 0, Array(values))
       end
 
-      data_sources = add_data_sources(workbook, header_format, options.fetch("data_sources", {}) || {})
-      pp data_sources
-      add_worksheet_validation(workbook, worksheet, column_indexes, data_sources, header_format, options)
+      added_data_sources = add_data_sources(workbook, header_format, data_sources)
 
-      freeze_panes(worksheet, options)
+      add_worksheet_validation(workbook, worksheet, column_indexes, added_data_sources, header_format, options)
+
+      add_frozen_panes(worksheet, freeze_panes)
 
       workbook.close
       io.string
@@ -51,9 +51,9 @@ module SpreadsheetExporter
     end
 
     # freeze_panes => [1, 2] # freeze the top row and left two cols
-    def self.freeze_panes(worksheet, options = {})
-      return unless options["freeze_panes"]
-      rows, cols = options["freeze_panes"]
+    def self.add_frozen_panes(worksheet, freeze_panes)
+      return unless freeze_panes
+      rows, cols = freeze_panes
       worksheet.freeze_panes(Integer(rows), Integer(cols))
     end
 
@@ -81,7 +81,7 @@ module SpreadsheetExporter
       data_source_refs = {}
 
       column_index = 0
-      data_sources.each do |data_key, data_values|
+      data_sources.stringify_keys.each do |data_key, data_values|
         if data_values.is_a?(Hash)
           # nested, conditional data structure
           data_values.each do |data_value, sub_values|
@@ -119,12 +119,11 @@ module SpreadsheetExporter
       data_key
     end
 
-    def self.add_worksheet_validation(workbook, worksheet, column_indexes, data_sources, header_format, options = {})
-      column_validations = options.fetch("validations", {}) || {}
-      return if column_validations.empty?
+    def self.add_worksheet_validation(workbook, worksheet, column_indexes, data_sources, header_format, validations)
+      return if validations.empty?
 
-      column_validations.each do |column_name, column_validation|
-        column_index = column_indexes[column_name]
+      validations.each do |column_name, column_validation|
+        column_index = column_indexes[column_name.to_s]
 
         if column_index.nil?
           warn "attempted to apply validation to missing column '#{column_name}'"

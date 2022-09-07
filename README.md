@@ -7,8 +7,9 @@ gem 'spreadsheet_exporter'
 
 ## Usage
 
-Objects that are exported must respond to ```as_csv``` or ```as_json``` and return a hash
-representing column names and values.
+Objects that are exported must respond to `as_spreadsheet`, `as_csv` or `as_json` and return a hash
+representing column names and values.  In Rails you can `include SpreadsheetExporter::GeneratesSpreadsheet` into your model.
+
 
 ### CSV or XLSX
 Output can be .csv or .xlsx. Choose by using SpreadsheetExporter::CSV or SpreadsheetExporter::XLSX modules.
@@ -32,28 +33,33 @@ that is actually comma-delimited, pass ```:col_sep => ','``` as an option when e
 ### XLSX with Pick Lists
 
 ```ruby
-options = {
-  # data sources are written to a `data` worksheet and may be referenced by
-  # multiple rows
-  "data_sources" => {
-    "food_types" => %w[Polenta Paella Papaya],
-    "countries" => %w[Canada Türkiye],
-    "cities" => {"Canada"=>["Sxwōxwiyám", "Toronto"], "Türkiye"=>["Eskişehir", "İzmir", "İstanbul"]}
-  },
-  "validations" => {
-    "favourite_food" => SpreadsheetExporter::ColumnValidation.new(
-      data_source: "food_types"
-    ),
-    "yuckiest_food" => SpreadsheetExporter::ColumnValidation.new(
-      data_source: "food_types"
-    ),
-    "country" => SpreadsheetExporter::ColumnValidation.new(
-      data_source: "countries"
-    ),
-    "city" => SpreadsheetExporter::ColumnValidation.new(
-      dependent_on: "country",
-      data_source: "cities"
-    ),
-  },
-  "freeze_panes" => [1, 0] # number of rows and columns to freeze (only applies to XLSX)
+# data sources are written to a `data` worksheet and may be referenced by
+# multiple rows
+data_sources = {
+  "food_types" => %w[Polenta Paella Papaya],
+  "countries" => %w[Canada Türkiye],
+  "cities" => {"Canada"=>["Sxwōxwiyám", "Toronto"], "Türkiye"=>["Eskişehir", "İzmir", "İstanbul"]}
+}
+
+validations = {
+  "favourite_food" => SpreadsheetExporter::ColumnValidation.new(
+    data_source: "food_types"
+  ),
+  "yuckiest_food" => SpreadsheetExporter::ColumnValidation.new(
+    data_source: "food_types"
+  ),
+  "country" => SpreadsheetExporter::ColumnValidation.new(
+    data_source: "countries"
+  ),
+  "city" => SpreadsheetExporter::ColumnValidation.new(
+    dependent_on: "country",
+    data_source: "cities"
+  ),
+}
+
+SpreadsheetExporter::XLSX.from_objects(array_of_objects,
+  data_sources: data_sources,
+  validations: validations,
+  freeze_panes: [1, 0] # number of rows and columns to freeze (only applies to XLSX)
+)
 ```

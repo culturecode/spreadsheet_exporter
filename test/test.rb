@@ -1,13 +1,6 @@
 #!/usr/bin/env ruby
-require_relative "./lib/spreadsheet_exporter"
-require_relative "./test_data"
-require "awesome_print"
-require "debug"
-
-# http://support.microsoft.com/kb/211485
-#
-# TODO: we should add a column for all the missing validations even if there is
-# no data in it yet
+require_relative "../lib/spreadsheet_exporter"
+require_relative "./fixtures"
 
 data = [
   {"name" => "Jim", "role" => "admin"}.merge(country_and_city),
@@ -57,9 +50,6 @@ class Humanizer
     att.upcase
   end
 end
-
-# debugger
-# SpreadsheetExporter::CSV.from_objects(data, :humanize_headers_class => Humanizer)
 
 options[:humanize_headers_class] = Humanizer
 options[:freeze_panes] = [1, 1]

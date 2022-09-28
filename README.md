@@ -63,3 +63,7 @@ SpreadsheetExporter::XLSX.from_objects(array_of_objects,
   freeze_panes: [1, 0] # number of rows and columns to freeze (only applies to XLSX)
 )
 ```
+
+### Testing
+
+There isn't currently a test suite.  You can generate a sample test XLSX file by running `test/test.rb`.

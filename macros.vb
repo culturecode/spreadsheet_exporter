@@ -1,3 +1,17 @@
+' This Visual Basic for Applications code can be added to the generated
+' XLSX files to gain some data entry UX improvements.
+'
+' Specifically:
+' - the ability to select multiple values for a single column with a data source
+' - clearing dependent columns values when the column they are dependent_on changes
+'
+' Limitations:
+' - only one parent col is supported and the dependent_on child columns must be
+'   all beside each other so they can be selected as a range
+'
+' You will need to change `ParentTypeCol`, `DependentTypeStartCol` and `DependentTypeEndCol`
+' below before adding the code to your Excel file.
+
 Option Explicit
 
 ' https://stackoverflow.com/a/48375276/559596

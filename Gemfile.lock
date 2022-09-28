@@ -1,14 +1,26 @@
 PATH
   remote: .
   specs:
-    spreadsheet_exporter (0.1.1)
+    spreadsheet_exporter (0.1.2)
+      activesupport (>= 6)
       write_xlsx
 
 GEM
   remote: https://rubygems.org/
   specs:
-    rubyzip (2.3.0)
-    write_xlsx (0.83.0)
+    activesupport (7.0.3.1)
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      i18n (>= 1.6, < 2)
+      minitest (>= 5.1)
+      tzinfo (~> 2.0)
+    concurrent-ruby (1.1.10)
+    i18n (1.12.0)
+      concurrent-ruby (~> 1.0)
+    minitest (5.16.2)
+    rubyzip (2.3.2)
+    tzinfo (2.0.5)
+      concurrent-ruby (~> 1.0)
+    write_xlsx (1.09.3)
       rubyzip (>= 1.0.0)
       zip-zip
     zip-zip (0.3)
@@ -21,4 +33,4 @@ DEPENDENCIES
   spreadsheet_exporter!
 
 BUNDLED WITH
-   1.10.4
+   2.3.19

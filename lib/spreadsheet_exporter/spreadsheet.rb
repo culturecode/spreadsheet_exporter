@@ -1,24 +1,43 @@
 # TODO: Find out why we can't detect arrays properly and must resort to crappy class.name comparison
 module SpreadsheetExporter
+  HeaderCell = Struct.new(:attribute_name, :human_attribute_name) do
+    def to_s
+      human_attribute_name.presence || attribute_name
+    end
+  end
+
   module Spreadsheet
-    def self.from_objects(objects, options = {})
+    def self.from_objects(objects, humanize_headers_class: nil, **options)
       headers = []
       rows = []
 
       # Get all the data and accumulate headers from each row (since rows may not have all the same attributes)
       Array(objects).each do |object|
-        data = object.respond_to?(:as_csv) ? get_values(object.as_csv(options)) : get_values(object.as_json(options))
-        headers = headers | data.keys
+        data = if object.respond_to?(:as_spreadsheet)
+          get_values(object.as_spreadsheet(options))
+        elsif object.respond_to?(:as_csv)
+          get_values(object.as_csv(options))
+        else
+          get_values(object.as_json(options))
+        end
+
+        headers |= data.keys.map { |v| HeaderCell.new(v) }
         rows << data
       end
 
       # Create the csv, ensuring to place each row's attributes under the appropriate header (since rows may not have all the same attributes)
       [].tap do |spreadsheet|
-        spreadsheet << (options[:humanize_headers_class] ? han(options[:humanize_headers_class], headers) : headers)
+        if humanize_headers_class
+          headers = han(headers, humanize_headers_class: humanize_headers_class, **options)
+        end
+
+        spreadsheet << headers
+
         rows.each do |row|
           sorted_row = []
           row.each do |header, value|
-            sorted_row[headers.index(header)] = value
+            col_index = headers.find_index { |h| h.attribute_name == header }
+            sorted_row[col_index] = value
           end
 
           spreadsheet << sorted_row
@@ -28,14 +47,14 @@ module SpreadsheetExporter
 
     # Return an array of human_attribute_name's
     # Used by the CSV Import/Export process to match CSV headers to model attribute names
-    def self.han(klass, *attributes)
-      options = attributes.extract_options!
+    def self.han(headers, humanize_headers_class:, downcase: false, **)
+      headers.flatten!
 
-      attributes.flatten!
-      attributes.collect! {|attribute| klass.human_attribute_name(attribute) }
-      attributes.collect!(&:downcase) if options[:downcase]
-
-      return attributes.many? ? attributes : attributes.first
+      headers.collect! do |header|
+        header.human_attribute_name = humanize_headers_class.human_attribute_name(header.attribute_name)
+        header.human_attribute_name.downcase! if downcase
+        header
+      end
     end
 
     def self.get_values(node, current_header = nil)

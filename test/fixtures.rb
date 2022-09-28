@@ -10,7 +10,6 @@ end
 
 MEALS = %w[Omnivore Veg Vegan]
 
-# COUNTRIES = %w[Canada Türkiye]
 COUNTRIES = %w[Canada Turkey]
 
 CONDITIONAL_CITIES = {

@@ -17,5 +17,6 @@ Gem::Specification.new do |s|
   s.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
   s.test_files = Dir["test/**/*"]
 
-  s.add_dependency "write_xlsx"
+  s.add_dependency "write_xlsx", '1.12.1'
+  s.add_dependency "rubyzip", '2.4.1' # Lock to a version that works with write_xlsx (needs Zip::File::CREATE)
 end

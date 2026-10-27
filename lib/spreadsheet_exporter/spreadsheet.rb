@@ -51,8 +51,10 @@ module SpreadsheetExporter
             output[key] = [output[key], value.to_s].compact.join(', ')
           end
         end
-      else
+      when 'NilClass', 'TrueClass', 'FalseClass'
         output[current_header] = node.to_s
+      else
+        output[current_header] = node
       end
       return output
     end

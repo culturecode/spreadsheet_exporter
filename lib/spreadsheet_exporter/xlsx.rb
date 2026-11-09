@@ -1,4 +1,5 @@
 require 'write_xlsx'
+require 'stringio'
 require_relative 'spreadsheet'
 
 module SpreadsheetExporter
@@ -8,9 +9,10 @@ module SpreadsheetExporter
       from_spreadsheet(spreadsheet)
     end
 
-    def self.from_spreadsheet(spreadsheet, temp_file_path = 'tmp/items.xlsx')
+    def self.from_spreadsheet(spreadsheet)
       # Create a new Excel workbook
-      workbook = WriteXLSX.new(temp_file_path)
+      output = StringIO.new
+      workbook = WriteXLSX.new(output)
 
       # Add a worksheet
       worksheet = workbook.add_worksheet
@@ -21,23 +23,26 @@ module SpreadsheetExporter
 
       # Write header row
       Array(spreadsheet.first).each_with_index do |column_name, col|
-        worksheet.write(0, col, column_name, headerFormat)
+        if column_name.is_a?(String)
+          worksheet.write_string(0, col, column_name, headerFormat)
+        else
+          worksheet.write(0, col, column_name, headerFormat)
+        end
       end
 
       Array(spreadsheet[1..-1]).each_with_index do |values, row|
         Array(values).each_with_index do |value, col|
-          worksheet.write(row + 1, col, value)
+          if value.is_a?(String)
+            worksheet.write_string(row + 1, col, value)
+          else
+            worksheet.write(row + 1, col, value)
+          end
         end
       end
 
-      # Output the file contents and delete it
       workbook.close
-      file = File.open(temp_file_path)
-      output = file.read
-      file.close
-      File.delete(temp_file_path)
 
-      return output
+      return output.string
     end
   end
 end

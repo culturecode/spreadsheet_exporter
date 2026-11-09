@@ -5,6 +5,21 @@ require 'roo'
 require 'spreadsheet_exporter/xlsx'
 
 class XLSXTest < Minitest::Test
+  def test_concurrent_exports_keep_their_own_contents
+    exports = 10.times.map do |number|
+      Thread.new do
+        SpreadsheetExporter::XLSX.from_spreadsheet([['Report'], ["Report #{number}"]])
+      end
+    end.map(&:value)
+
+    exports.each_with_index do |output, number|
+      spreadsheet = Roo::Excelx.new(StringIO.new(output))
+      assert_equal "Report #{number}", spreadsheet.cell(2, 1)
+    ensure
+      spreadsheet&.close
+    end
+  end
+
   def test_preserves_leading_zeros_in_numeric_strings
     with_export('file_number' => '0012345') do |spreadsheet|
       assert_equal '0012345', spreadsheet.cell(2, 1)
